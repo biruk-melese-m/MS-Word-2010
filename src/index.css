@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --office-blue-primary: #1b539c;
+    --office-file-tab-bg: linear-gradient(to bottom, #1f72c6 0%, #175aa3 100%);
+    --office-file-tab-hover: linear-gradient(to bottom, #2b84df 0%, #1e6bc0 100%);
+    --office-ribbon-bg: linear-gradient(to bottom, #eff4fa 0%, #e1ecf8 40%, #d4e3f3 100%);
+    --office-ribbon-border: #a9bece;
+    --office-workspace-bg: #8297b0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    font-family: "Segoe UI", Tahoma, Calibri, Arial, sans-serif;
+    background-color: #8297b0;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Office 2010 Button styling */
+.office-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.office-btn:hover {
+  background: linear-gradient(to bottom, #fffdf2 0%, #ffebad 100%);
+  border-color: #f1c15d;
+  box-shadow: inset 0 0 1px #fff;
+}
+
+.office-btn:active, .office-btn.active {
+  background: linear-gradient(to bottom, #fed876 0%, #fdbb30 100%);
+  border-color: #c28b2a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.office-btn-highlight {
+  background: linear-gradient(to bottom, #fff8db 0%, #fde79b 100%);
+  border-color: #e5b34b;
+}
+
+/* Window caption buttons */
+.win-caption-btn {
+  width: 28px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.win-caption-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.win-caption-btn.close:hover {
+  background: #e81123;
+  color: white;
+}
+
+.win-caption-btn.close:hover svg path {
+  stroke: white;
+}
+
+/* Group container & dividers */
+.ribbon-group-separator {
+  width: 2px;
+  margin: 4px 1px;
+  background: linear-gradient(to bottom, rgba(169, 190, 206, 0.1) 0%, #a4b9cb 20%, #a4b9cb 80%, rgba(169, 190, 206, 0.1) 100%);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Rulers */
+.ruler-tick {
+  background-color: #8c9eb4;
+}
+
+/* Custom Office 2010 Scrollbars */
+::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+::-webkit-scrollbar-track {
+  background: #eef3f9;
+  border-left: 1px solid #c2d3e4;
+  border-top: 1px solid #c2d3e4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to right, #cfdef1 0%, #b8cde4 100%);
+  border: 1px solid #9bb5d1;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to right, #b8d2ed 0%, #9fc0e0 100%);
+  border-color: #7d9ebd;
+}
+
+::-webkit-scrollbar-button {
+  background: linear-gradient(to bottom, #e8f0fa 0%, #d1e2f3 100%);
+  border: 1px solid #a9c1d9;
+  height: 17px;
+  width: 17px;
+}
+
+/* Document sheet styling */
+.document-sheet {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Keyframes for blinking cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s infinite;
+}

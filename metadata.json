@@ -1,0 +1,6 @@
+{
+  "name": "Microsoft Word 2010",
+  "description": "An authentic recreation of the Microsoft Word 2010 desktop application interface with complete ribbon tabs, rulers, backstage view, and workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
