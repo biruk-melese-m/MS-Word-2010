@@ -21,10 +21,10 @@ export const DialogModal: React.FC<DialogModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className={`${width} bg-[#edf3fa] border border-[#7f9db9] shadow-2xl rounded-[3px] flex flex-col font-sans select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4">
+      <div className={`${width} max-w-[96vw] max-h-[92vh] bg-[#edf3fa] border border-[#7f9db9] shadow-2xl rounded-[3px] flex flex-col font-sans select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100`}>
         {/* Windows 7 / Office 2010 Title Bar */}
-        <div className="h-[26px] bg-gradient-to-b from-[#e8f1fb] via-[#d4e4f7] to-[#bed8f3] border-b border-[#a0bad6] px-2 flex items-center justify-between">
+        <div className="h-[26px] bg-gradient-to-b from-[#e8f1fb] via-[#d4e4f7] to-[#bed8f3] border-b border-[#a0bad6] px-2 flex items-center justify-between shrink-0">
           <span className="text-[11.5px] font-semibold text-[#1e395b]">{title}</span>
           <button
             onClick={onClose}
@@ -35,12 +35,12 @@ export const DialogModal: React.FC<DialogModalProps> = ({
         </div>
 
         {/* Dialog Body */}
-        <div className="p-3 text-[11px] text-[#1e293b]">
+        <div className="p-3 text-[11px] text-[#1e293b] overflow-y-auto max-h-[calc(92vh-70px)]">
           {children}
         </div>
 
         {/* Dialog Footer */}
-        <div className="h-[38px] bg-[#dbe8f7] border-t border-[#b9cfeb] px-3 flex items-center justify-end gap-2">
+        <div className="h-[38px] bg-[#dbe8f7] border-t border-[#b9cfeb] px-3 flex items-center justify-end gap-2 shrink-0">
           {footerButtons ? (
             footerButtons
           ) : (
@@ -62,6 +62,76 @@ export const DialogModal: React.FC<DialogModalProps> = ({
         </div>
       </div>
     </div>
+  );
+};
+
+// 0. Paste Special Dialog
+export const PasteSpecialDialog: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const { pasteSpecial } = useDocument();
+  const [selectedFormat, setSelectedFormat] = useState<'html' | 'text' | 'match-dest'>('html');
+
+  const handleApply = () => {
+    pasteSpecial(selectedFormat);
+    onClose();
+  };
+
+  return (
+    <DialogModal
+      title="Paste Special"
+      isOpen={isOpen}
+      onClose={onClose}
+      width="w-[420px]"
+      footerButtons={
+        <>
+          <button
+            onClick={handleApply}
+            className="w-[72px] h-[22px] bg-gradient-to-b from-[#ffffff] to-[#d6e3f2] border border-[#7f9db9] rounded-[2px] hover:border-[#3c7fb1] text-[11px] font-medium"
+          >
+            OK
+          </button>
+          <button
+            onClick={onClose}
+            className="w-[72px] h-[22px] bg-gradient-to-b from-[#ffffff] to-[#d6e3f2] border border-[#7f9db9] rounded-[2px] hover:border-[#3c7fb1] text-[11px] font-medium"
+          >
+            Cancel
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div className="text-[11px] text-gray-700">Source: System Clipboard</div>
+        <fieldset className="border border-[#abc1db] p-3 space-y-2">
+          <legend className="px-1 text-[#41556e] font-medium">As:</legend>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="pasteFormat"
+              checked={selectedFormat === 'html'}
+              onChange={() => setSelectedFormat('html')}
+            />
+            <span>HTML Document (Keep Source Formatting)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="pasteFormat"
+              checked={selectedFormat === 'text'}
+              onChange={() => setSelectedFormat('text')}
+            />
+            <span>Unformatted Text (Plain Text)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="pasteFormat"
+              checked={selectedFormat === 'match-dest'}
+              onChange={() => setSelectedFormat('match-dest')}
+            />
+            <span>Match Destination Formatting</span>
+          </label>
+        </fieldset>
+      </div>
+    </DialogModal>
   );
 };
 

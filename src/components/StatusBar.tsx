@@ -62,28 +62,28 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         <button
           onClick={onOpenSpellingDialog}
           title="Proofing status. Click to run spelling & grammar check."
-          className="office-btn px-1 py-0.5 flex items-center justify-center hover:bg-[#d8e6f7]"
+          className="office-btn px-1 py-0.5 hidden sm:flex items-center justify-center hover:bg-[#d8e6f7]"
         >
           <ProofingIcon size={13} />
         </button>
 
         <button
           title="The language used in the document."
-          className="office-btn px-1.5 py-0.5 text-[#1e395b] hover:bg-[#d8e6f7]"
+          className="office-btn px-1.5 py-0.5 text-[#1e395b] hover:bg-[#d8e6f7] hidden md:inline-flex"
         >
           English (U.S.)
         </button>
 
         {/* Autosave status indicator */}
-        <span className="text-[10px] text-gray-600 italic px-1">
+        <span className="text-[10px] text-gray-600 italic px-1 hidden md:inline">
           {savedStatus}
         </span>
       </div>
 
       {/* Right: Document Views & Zoom Slider */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* View Mode Shortcuts */}
-        <div className="flex items-center gap-0.5 border-r border-[#9cb6d3] pr-2">
+        <div className="hidden sm:flex items-center gap-0.5 border-r border-[#9cb6d3] pr-2">
           <button
             title="Print Layout"
             onClick={() => setViewMode('print-layout')}

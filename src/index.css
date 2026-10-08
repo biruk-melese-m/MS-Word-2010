@@ -117,9 +117,74 @@
   width: 17px;
 }
 
-/* Document sheet styling */
-.document-sheet {
+/* Document sheet and Word 2010 A4 Separated Pages */
+.document-sheet,
+.word-page {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+  background-color: var(--page-color, #ffffff);
+  width: calc(var(--page-width, 794px) * var(--doc-scale, 1));
+  min-height: calc(var(--page-height, 1123px) * var(--doc-scale, 1));
+  margin-bottom: 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(var(--margin-top, 96px) * var(--doc-scale, 1));
+  padding-bottom: calc(var(--margin-bottom, 96px) * var(--doc-scale, 1));
+  padding-left: calc(var(--margin-left, 96px) * var(--doc-scale, 1));
+  padding-right: calc(var(--margin-right, 96px) * var(--doc-scale, 1));
+  position: relative;
+  transition: box-shadow 0.15s ease;
+}
+
+.word-page:last-child {
+  margin-bottom: 32px;
+}
+
+.word-page-header {
+  width: 100%;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #cbd5e1;
+  font-size: calc(11px * var(--doc-scale, 1));
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.word-page-content {
+  flex: 1;
+  outline: none;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: calc(14.6px * var(--doc-scale, 1));
+  line-height: 1.15;
+  color: #000000;
+}
+
+.word-page-footer {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: calc(11px * var(--doc-scale, 1));
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+@media print {
+  .document-sheet,
+  .word-page {
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
 }
 
 /* Keyframes for blinking cursor */
@@ -130,4 +195,31 @@
 
 .cursor-blink {
   animation: blink 1s infinite;
+}
+
+/* Authentic Word 2010 Show/Hide Formatting Marks (¶) */
+.show-word-formatting-marks p::after,
+.show-word-formatting-marks h1::after,
+.show-word-formatting-marks h2::after,
+.show-word-formatting-marks h3::after,
+.show-word-formatting-marks li::after,
+.show-word-formatting-marks blockquote::after {
+  content: " ¶";
+  color: #7fa4cd;
+  font-weight: normal;
+  font-style: normal;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Subtle Ribbon scrollbar so groups never get cut off on laptop/tablet/mobile */
+.ribbon-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.ribbon-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ribbon-scroll::-webkit-scrollbar-thumb {
+  background: #a9bed4;
+  border-radius: 2px;
 }

@@ -4,8 +4,6 @@ import {
   HomeTab,
   InsertTab,
   PageLayoutTab,
-  ReferencesTab,
-  ReviewTab,
   ViewTab,
 } from './RibbonTabsContent';
 
@@ -48,18 +46,16 @@ export const Ribbon: React.FC<RibbonProps> = ({
   setZoomLevel,
   onHelpClick,
 }) => {
-  // Approved tabs only: Home, Insert, Page Layout, References, Review, View
+  // Approved tabs only: Home, Insert, Page Layout, View
   const tabs: { id: RibbonTabType; label: string }[] = [
     { id: 'home', label: 'Home' },
     { id: 'insert', label: 'Insert' },
     { id: 'page-layout', label: 'Page Layout' },
-    { id: 'references', label: 'References' },
-    { id: 'review', label: 'Review' },
     { id: 'view', label: 'View' },
   ];
 
   return (
-    <div className="flex flex-col select-none border-b border-[#abbfd5] shadow-xs">
+    <div className="flex flex-col select-none border-b border-[#abbfd5] shadow-xs relative z-30">
       {/* 1. Tab Bar Header */}
       <div className="h-[25px] bg-gradient-to-b from-[#cce0f5] via-[#bdd6ef] to-[#adcbe9] flex items-end justify-between px-1.5 pt-0.5 border-b border-[#a0b8d2]">
         {/* Left: File Button & Tabs */}
@@ -127,12 +123,10 @@ export const Ribbon: React.FC<RibbonProps> = ({
 
       {/* 2. Ribbon Body Content (Groups) */}
       {!isRibbonCollapsed && (
-        <div className="h-[96px] bg-gradient-to-b from-[#eaf2fb] via-[#deecf9] to-[#d0e1f3] px-1 flex items-center overflow-x-auto overflow-y-hidden shadow-inner">
+        <div className="h-[96px] bg-gradient-to-b from-[#eaf2fb] via-[#deecf9] to-[#d0e1f3] px-1 flex items-center shadow-inner relative z-30 overflow-visible">
           {activeTab === 'home' && <HomeTab onOpenDialog={onOpenDialog} />}
           {activeTab === 'insert' && <InsertTab onOpenDialog={onOpenDialog} />}
           {activeTab === 'page-layout' && <PageLayoutTab onOpenDialog={onOpenDialog} />}
-          {activeTab === 'references' && <ReferencesTab onOpenDialog={onOpenDialog} />}
-          {activeTab === 'review' && <ReviewTab onOpenDialog={onOpenDialog} />}
           {activeTab === 'view' && (
             <ViewTab
               showRuler={showRuler}

@@ -3,8 +3,6 @@ export type RibbonTabType =
   | 'home'
   | 'insert'
   | 'page-layout'
-  | 'references'
-  | 'review'
   | 'view';
 
 export type BackstageSection = 
@@ -89,3 +87,7 @@ export interface WordCountStats {
   paragraphs: number;
   lines: number;
 }
+
+export type BulletStyle = 'disc' | 'circle' | 'square' | 'diamond' | 'arrow' | 'check';
+export type NumberingStyle = 'decimal' | 'decimal-paren' | 'upper-alpha' | 'lower-alpha' | 'lower-roman' | 'upper-roman';
+export type PasteSpecialOption = 'html' | 'text' | 'match-dest';

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RulerToggleIcon } from './WordIcons';
 import { DocumentViewMode } from '../types';
-import { useDocument } from '../context/DocumentContext';
+import { useDocument, initialSampleContent } from '../context/DocumentContext';
 import { NavigationPane } from './NavigationPane';
 import { ContextMenu } from './ContextMenu';
 
@@ -31,6 +31,8 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     isReadOnly,
     isProtected,
     updateSelectionState,
+    recordSnapshot,
+    showFormattingMarks,
     pageLayout,
     headerText,
     setHeaderText,
@@ -45,6 +47,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     footnotes,
     formatPainterActive,
     toggleFormatPainter,
+    applyFormatPainterToSelection,
     executeCommand,
     setFontFamily,
     setFontSize,
@@ -53,7 +56,35 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     selectAll,
     saveDocument,
     printDocument,
+    insertPageBreak,
   } = useDocument();
+
+  // Initialize editor content once
+  useEffect(() => {
+    if (editorRef.current) {
+      if (!editorRef.current.innerHTML.trim()) {
+        editorRef.current.innerHTML = initialSampleContent;
+      } else if (!editorRef.current.querySelector('.word-page')) {
+        const currentHTML = editorRef.current.innerHTML;
+        editorRef.current.innerHTML = `
+          <div class="word-page" data-page="1">
+            <div class="word-page-header" contenteditable="false">
+              <span>${headerText || '[Header - Double click to edit]'}</span>
+              <span>Page 1</span>
+            </div>
+            <div class="word-page-content">
+              ${currentHTML}
+            </div>
+            <div class="word-page-footer" contenteditable="false">
+              <span>${footerText || '[Footer - Double click to edit]'}</span>
+              <span>Page 1</span>
+            </div>
+          </div>
+        `;
+      }
+      updateSelectionState();
+    }
+  }, [editorRef, updateSelectionState, headerText, footerText]);
 
   // Context Menu state
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -85,6 +116,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
       else if (key === 'f') { e.preventDefault(); onOpenDialog('find'); }
       else if (key === 'h') { e.preventDefault(); onOpenDialog('find'); }
       else if (key === 'k') { e.preventDefault(); onOpenDialog('hyperlink'); }
+      else if (e.key === 'Enter') { e.preventDefault(); insertPageBreak(); }
     }
   };
 
@@ -210,123 +242,62 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           className={`flex-1 overflow-auto flex justify-center py-6 px-4 bg-[#8297b0] relative ${
             formatPainterActive ? 'cursor-crosshair' : ''
           }`}
+          style={{
+            '--page-width': `${pageWidth}px`,
+            '--page-height': `${pageHeight}px`,
+            '--doc-scale': scale,
+            '--margin-top': `${pageLayout.margins.top}px`,
+            '--margin-bottom': `${pageLayout.margins.bottom}px`,
+            '--margin-left': `${pageLayout.margins.left}px`,
+            '--margin-right': `${pageLayout.margins.right}px`,
+            '--page-color': pageLayout.pageColor,
+          } as React.CSSProperties}
         >
-          {/* Main Document Paper Sheet */}
+          {/* Main Document Paper Container with Separated A4 Pages */}
           <div
-            className={`document-sheet relative transition-all duration-75 flex flex-col cursor-text select-text ${
-              pageLayout.pageBorder ? 'border-4 border-[#334155]' : ''
+            ref={editorRef}
+            contentEditable={!isReadOnly && !isProtected}
+            suppressContentEditableWarning
+            onInput={() => {
+              recordSnapshot();
+              updateSelectionState();
+            }}
+            onKeyUp={updateSelectionState}
+            onMouseUp={() => {
+              updateSelectionState();
+              if (formatPainterActive) {
+                applyFormatPainterToSelection();
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            onClick={handleEditorClick}
+            className={`outline-none flex flex-col items-center select-text relative z-10 ${
+              showFormattingMarks ? 'show-word-formatting-marks' : ''
+            } ${pageLayout.pageBorder ? 'has-page-border' : ''} ${
+              showGridlines ? 'has-gridlines' : ''
             }`}
             style={{
-              width: `${pageWidth * scale}px`,
-              minHeight: `${pageHeight * scale}px`,
-              backgroundColor: pageLayout.pageColor,
-              paddingTop: `${pageLayout.margins.top * scale}px`,
-              paddingBottom: `${pageLayout.margins.bottom * scale}px`,
-              paddingLeft: `${pageLayout.margins.left * scale}px`,
-              paddingRight: `${pageLayout.margins.right * scale}px`,
               direction: pageLayout.direction,
+              fontFamily: 'Calibri, Arial, sans-serif',
+              fontSize: `${14.6 * scale}px`,
+              lineHeight: 1.15,
+              color: '#000000',
             }}
             onContextMenu={handleContextMenu}
-          >
-            {/* Optional Watermark */}
-            {pageLayout.watermark && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
-                <span
-                  className="text-gray-300 font-bold opacity-30 tracking-widest uppercase transform -rotate-45"
-                  style={{ fontSize: `${80 * scale}px` }}
-                >
-                  {pageLayout.watermark}
-                </span>
-              </div>
-            )}
+          />
 
-            {/* Optional Gridlines Overlay */}
-            {showGridlines && (
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30 z-0"
-                style={{
-                  backgroundImage: `linear-gradient(to right, #94a3b8 1px, transparent 1px), linear-gradient(to bottom, #94a3b8 1px, transparent 1px)`,
-                  backgroundSize: '16px 16px',
-                }}
-              />
-            )}
-
-            {/* Header Area */}
-            <div
-              className="w-full mb-3 pb-1 border-b border-dashed border-gray-300 text-[11px] text-gray-400 flex items-center justify-between"
-              style={{ fontSize: `${11 * scale}px` }}
-            >
-              <input
-                type="text"
-                value={headerText}
-                onChange={(e) => setHeaderText(e.target.value)}
-                placeholder="[Header - Double click to edit]"
-                className="bg-transparent border-none outline-none text-gray-500 w-full"
-              />
-              {pageNumberPosition === 'top' && <span>Page 1</span>}
+          {/* Footnotes Floating Overlay if present */}
+          {footnotes.length > 0 && (
+            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white/95 border border-gray-400 shadow-lg rounded p-3 text-[11px] max-w-xl z-20">
+              <div className="font-bold text-gray-700 mb-1 border-b pb-1">Footnotes & Endnotes</div>
+              {footnotes.map((fn) => (
+                <div key={fn.id} className="mb-0.5 text-gray-800">
+                  <span className="font-bold mr-1 text-blue-600">[{fn.number}]</span>
+                  <span>{fn.text}</span>
+                </div>
+              ))}
             </div>
-
-            {/* Editable Document Body */}
-            <div
-              ref={editorRef}
-              contentEditable={!isReadOnly && !isProtected}
-              suppressContentEditableWarning
-              onKeyUp={updateSelectionState}
-              onMouseUp={updateSelectionState}
-              onKeyDown={handleKeyDown}
-              onClick={handleEditorClick}
-              className="flex-1 outline-none relative z-10 font-sans"
-              style={{
-                fontFamily: 'Calibri, Arial, sans-serif',
-                fontSize: `${14.6 * scale}px`,
-                lineHeight: 1.15,
-                color: '#000000',
-                columnCount: pageLayout.columns,
-                columnGap: '28px',
-              }}
-              dangerouslySetInnerHTML={{
-                __html: `
-                  <h1 style="color: #365f91; font-family: Calibri, sans-serif; font-size: 24px; margin-bottom: 12px; font-weight: bold;">Document1</h1>
-                  <p style="font-family: Calibri, sans-serif; font-size: 14px; line-height: 1.25; margin-bottom: 10px; color: #1e293b;">
-                    Welcome to Microsoft Word 2010. You can type, format text, insert tables and illustrations, adjust page layouts, add references, track changes, and manage your documents with authentic Office 2010 precision.
-                  </p>
-                  <p style="font-family: Calibri, sans-serif; font-size: 14px; line-height: 1.25; margin-bottom: 10px; color: #1e293b;">
-                    Select any text to apply fonts, colors, alignments, or styles from the ribbon above. You can also use standard keyboard shortcuts like <span style="font-weight: bold;">Ctrl+B</span> for bold, <span style="font-style: italic;">Ctrl+I</span> for italic, and <span style="text-decoration: underline;">Ctrl+U</span> for underline.
-                  </p>
-                  <p style="font-family: Calibri, sans-serif; font-size: 14px; line-height: 1.25; margin-bottom: 10px; color: #1e293b;">
-                    የአማርኛ ጽሑፍ ድጋፍም አለ (Amharic and full Unicode support included).
-                  </p>
-                `,
-              }}
-            />
-
-            {/* Footnotes Area */}
-            {footnotes.length > 0 && (
-              <div className="mt-8 pt-2 border-t border-gray-400 text-[10px] text-gray-700">
-                {footnotes.map((fn) => (
-                  <div key={fn.id} className="mb-1">
-                    <span className="font-bold mr-1">[{fn.number}]</span>
-                    <span>{fn.text}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Footer Area */}
-            <div
-              className="w-full mt-auto pt-2 border-t border-dashed border-gray-300 text-[11px] text-gray-400 flex items-center justify-between"
-              style={{ fontSize: `${11 * scale}px` }}
-            >
-              <input
-                type="text"
-                value={footerText}
-                onChange={(e) => setFooterText(e.target.value)}
-                placeholder="[Footer - Double click to edit]"
-                className="bg-transparent border-none outline-none text-gray-500 w-full"
-              />
-              {pageNumberPosition === 'bottom' && <span>Page 1</span>}
-            </div>
-          </div>
+          )}
 
           {/* Comments Sidebar Bubbles */}
           {comments.length > 0 && (

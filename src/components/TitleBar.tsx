@@ -25,15 +25,27 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onHelpClick,
   onOpenDialog,
 }) => {
-  const { docTitle, setDocTitle, isReadOnly, isProtected, saveDocument, undo, redo, printDocument } = useDocument();
+  const {
+    docTitle,
+    setDocTitle,
+    isReadOnly,
+    isProtected,
+    saveDocument,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    printDocument,
+  } = useDocument();
+
   const [showQatMenu, setShowQatMenu] = useState(false);
   const [showAppMenu, setShowAppMenu] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   return (
-    <div className="h-[28px] bg-gradient-to-b from-[#d2e4f7] via-[#c2daf3] to-[#b3cde9] border-b border-[#9eb7d4] flex items-center justify-between px-1 select-none relative shadow-sm">
+    <div className="h-[28px] bg-gradient-to-b from-[#d2e4f7] via-[#c2daf3] to-[#b3cde9] border-b border-[#9eb7d4] flex items-center justify-between px-1 select-none relative shadow-sm shrink-0">
       {/* Left: Quick Access Toolbar */}
-      <div className="flex items-center gap-0.5 z-10">
+      <div className="flex items-center gap-0.5 z-10 shrink-0">
         {/* Word 2010 App Icon with window menu */}
         <div className="relative">
           <button
@@ -60,7 +72,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           )}
         </div>
 
-        {/* Save button (Real Save) */}
+        {/* Save button */}
         <button
           onClick={saveDocument}
           title="Save (Ctrl+S)"
@@ -69,20 +81,26 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           <SaveIcon size={15} />
         </button>
 
-        {/* Undo button */}
+        {/* Undo button with active/disabled state */}
         <button
           onClick={undo}
-          title="Undo (Ctrl+Z)"
-          className="office-btn w-[22px] h-[22px] flex items-center justify-center"
+          disabled={!canUndo}
+          title={canUndo ? 'Undo (Ctrl+Z)' : 'Can\'t Undo'}
+          className={`office-btn w-[22px] h-[22px] flex items-center justify-center ${
+            !canUndo ? 'opacity-40 cursor-default' : ''
+          }`}
         >
           <UndoIcon size={14} />
         </button>
 
-        {/* Redo button */}
+        {/* Redo button with active/disabled state */}
         <button
           onClick={redo}
-          title="Redo (Ctrl+Y)"
-          className="office-btn w-[22px] h-[22px] flex items-center justify-center"
+          disabled={!canRedo}
+          title={canRedo ? 'Redo (Ctrl+Y)' : 'Can\'t Redo'}
+          className={`office-btn w-[22px] h-[22px] flex items-center justify-center ${
+            !canRedo ? 'opacity-40 cursor-default' : ''
+          }`}
         >
           <RedoIcon size={14} />
         </button>
@@ -108,11 +126,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                   <span className="w-3 text-blue-600 font-bold">✓</span>
                   <span>Save</span>
                 </div>
-                <div onClick={() => { undo(); setShowQatMenu(false); }} className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2">
+                <div onClick={() => { if (canUndo) undo(); setShowQatMenu(false); }} className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2">
                   <span className="w-3 text-blue-600 font-bold">✓</span>
                   <span>Undo</span>
                 </div>
-                <div onClick={() => { redo(); setShowQatMenu(false); }} className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2">
+                <div onClick={() => { if (canRedo) redo(); setShowQatMenu(false); }} className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2">
                   <span className="w-3 text-blue-600 font-bold">✓</span>
                   <span>Redo</span>
                 </div>
@@ -130,8 +148,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </div>
       </div>
 
-      {/* Center: Title (Editable click-to-rename) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+      {/* Center: Title (Responsive, click-to-rename) */}
+      <div className="absolute inset-x-24 inset-y-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         {isEditingTitle ? (
           <input
             type="text"
@@ -140,13 +158,13 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             onBlur={() => setIsEditingTitle(false)}
             onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingTitle(false); }}
             autoFocus
-            className="pointer-events-auto h-5 px-1.5 text-[12px] font-sans font-semibold text-[#1c385b] border border-blue-400 bg-white rounded"
+            className="pointer-events-auto h-5 px-1.5 text-[12px] font-sans font-semibold text-[#1c385b] border border-blue-400 bg-white rounded max-w-[280px]"
           />
         ) : (
           <span
             onClick={() => setIsEditingTitle(true)}
             title="Click to rename document"
-            className="pointer-events-auto cursor-pointer hover:underline text-[12px] font-sans font-semibold text-[#1c385b] tracking-wide drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]"
+            className="pointer-events-auto cursor-pointer hover:underline text-[12px] font-sans font-semibold text-[#1c385b] tracking-wide drop-shadow-[0_1px_0_rgba(255,255,255,0.6)] truncate max-w-[320px] sm:max-w-[450px]"
           >
             {docTitle} {isReadOnly || isProtected ? '[Read-Only]' : ''} - Microsoft Word
           </span>
@@ -154,7 +172,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       </div>
 
       {/* Right: Window Controls */}
-      <div className="flex items-center gap-1 z-10">
+      <div className="flex items-center gap-1 z-10 shrink-0">
         <div className="flex items-center">
           <button title="Minimize" className="win-caption-btn">
             <WinMinimizeIcon size={10} />

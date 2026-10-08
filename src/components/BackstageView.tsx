@@ -371,7 +371,7 @@ export const BackstageView: React.FC<BackstageViewProps> = ({
                   <div className="font-semibold text-gray-700 mb-1">Settings</div>
                   <div className="p-2 bg-white border border-[#abc1db] rounded-[2px] space-y-1">
                     <div>Print All Pages ({wordCountStats.pages})</div>
-                    <div className="text-gray-500">Letter • Normal Margins • Portrait</div>
+                    <div className="text-gray-500">A4 (210 x 297 mm) • Normal Margins • Portrait</div>
                   </div>
                 </div>
               </div>

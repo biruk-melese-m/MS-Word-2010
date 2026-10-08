@@ -65,6 +65,7 @@ export const RibbonLargeButton: React.FC<RibbonLargeButtonProps> = ({
 
   return (
     <button
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -109,6 +110,7 @@ export const RibbonSplitButton: React.FC<RibbonSplitButtonProps> = ({
   return (
     <div className="flex flex-col items-center h-[70px] min-w-[44px] rounded-[2px] border border-transparent hover:border-[#f1c15d] hover:bg-gradient-to-b hover:from-[#fffdf2] hover:to-[#ffebad] transition-all">
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={onMainClick}
         title={title || label}
         className="w-full h-[46px] flex flex-col items-center justify-center hover:bg-[#fff9d7] rounded-t-[2px]"
@@ -119,6 +121,7 @@ export const RibbonSplitButton: React.FC<RibbonSplitButtonProps> = ({
       </button>
       <div className="w-[80%] h-[1px] bg-[#f0d494]" />
       <button
+        onMouseDown={(e) => e.preventDefault()}
         onClick={onDropClick}
         className="w-full flex-1 flex items-center justify-center gap-1 hover:bg-[#ffe395] rounded-b-[2px] px-1"
       >
@@ -151,6 +154,7 @@ export const RibbonSmallButton: React.FC<RibbonSmallButtonProps> = ({
 }) => {
   return (
     <button
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title || label}
       className={`office-btn flex items-center gap-1 px-1 py-[2px] h-[22px] min-w-[22px] justify-center ${
@@ -183,6 +187,10 @@ export const RibbonDropdown: React.FC<RibbonDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [currentVal, setCurrentVal] = useState(value);
 
+  React.useEffect(() => {
+    setCurrentVal(value);
+  }, [value]);
+
   const handleSelect = (val: string) => {
     setCurrentVal(val);
     setIsOpen(false);
@@ -192,6 +200,7 @@ export const RibbonDropdown: React.FC<RibbonDropdownProps> = ({
   return (
     <div className={`relative ${width}`}>
       <div
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen(!isOpen)}
         title={title}
         className="h-[21px] flex items-center justify-between px-1.5 bg-white border border-[#abc1db] rounded-[2px] cursor-pointer hover:border-[#5c8bc2] text-[11px] text-[#1e293b]"
@@ -207,6 +216,7 @@ export const RibbonDropdown: React.FC<RibbonDropdownProps> = ({
             {options.map((opt) => (
               <div
                 key={opt}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(opt)}
                 className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer select-none"
                 style={{ fontFamily: title?.includes('Font') ? opt : undefined }}
@@ -229,6 +239,7 @@ interface StylesGalleryProps {
 export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) => {
   const [selectedStyle, setSelectedStyle] = useState('Normal');
   const [scrollIndex, setScrollIndex] = useState(0);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const stylesList = [
     { name: 'Normal', sample: 'AaBbCcDd', sub: 'Normal' },
@@ -249,7 +260,7 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
   const visibleStyles = stylesList.slice(scrollIndex, scrollIndex + 4);
 
   return (
-    <div className="flex items-center h-[70px] bg-white border border-[#abc1db] rounded-[2px] p-0.5">
+    <div className="relative flex items-center h-[70px] bg-white border border-[#abc1db] rounded-[2px] p-0.5">
       {/* Styles Swatches */}
       <div className="flex items-center gap-0.5">
         {visibleStyles.map((item) => {
@@ -257,6 +268,7 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
           return (
             <button
               key={item.name}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setSelectedStyle(item.name);
                 onStyleSelect?.(item.name);
@@ -289,6 +301,7 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
       {/* Up, Down, Expand Gallery buttons */}
       <div className="flex flex-col w-[16px] h-[64px] border-l border-[#d3dfed] ml-0.5">
         <button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => setScrollIndex(Math.max(0, scrollIndex - 1))}
           disabled={scrollIndex === 0}
           title="Scroll Up"
@@ -299,6 +312,7 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
           </svg>
         </button>
         <button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => setScrollIndex(Math.min(stylesList.length - 4, scrollIndex + 1))}
           disabled={scrollIndex >= stylesList.length - 4}
           title="Scroll Down"
@@ -309,6 +323,8 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
           </svg>
         </button>
         <button
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setIsMoreOpen(!isMoreOpen)}
           title="More Styles"
           className="flex-1 flex items-center justify-center office-btn border-t border-[#d3dfed]"
         >
@@ -318,6 +334,42 @@ export const StylesGallery: React.FC<StylesGalleryProps> = ({ onStyleSelect }) =
           </svg>
         </button>
       </div>
+
+      {/* Expanded Styles Gallery Menu */}
+      {isMoreOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsMoreOpen(false)} />
+          <div className="absolute top-[68px] right-0 w-[300px] bg-white border border-[#7f9db9] shadow-xl z-50 p-2 rounded-[2px]">
+            <div className="text-[10px] font-semibold text-gray-500 mb-1 border-b pb-1">Quick Styles Gallery</div>
+            <div className="grid grid-cols-3 gap-1 max-h-[240px] overflow-y-auto mb-2">
+              {stylesList.map((st) => (
+                <button
+                  key={st.name}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setSelectedStyle(st.name);
+                    onStyleSelect?.(st.name);
+                    setIsMoreOpen(false);
+                  }}
+                  className="flex flex-col items-center justify-center p-1.5 border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-center rounded-[1px]"
+                >
+                  <span
+                    className="text-[13px] font-sans"
+                    style={{
+                      color: st.color || '#000000',
+                      fontWeight: st.bold ? 'bold' : 'normal',
+                      fontStyle: st.italic ? 'italic' : 'normal',
+                    }}
+                  >
+                    {st.sample}
+                  </span>
+                  <span className="text-[9.5px] text-gray-600 truncate w-full">{st.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

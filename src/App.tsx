@@ -10,6 +10,7 @@ import { DocumentWorkspace } from './components/DocumentWorkspace';
 import { StatusBar } from './components/StatusBar';
 import { BackstageView } from './components/BackstageView';
 import {
+  PasteSpecialDialog,
   FontDialog,
   ParagraphDialog,
   FindReplaceDialog,
@@ -131,6 +132,11 @@ function WordApp() {
       />
 
       {/* 6. Authentic Word 2010 Modals */}
+      <PasteSpecialDialog
+        isOpen={activeDialog === 'pasteSpecial'}
+        onClose={handleCloseDialog}
+      />
+
       <FontDialog
         isOpen={activeDialog === 'font' || activeDialog === 'clipboard'}
         onClose={handleCloseDialog}
