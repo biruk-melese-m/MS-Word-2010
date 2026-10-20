@@ -103,11 +103,22 @@ interface DocumentContextType {
   rejectChange: (id: string) => void;
   citations: CitationItem[];
   addCitation: (item: CitationItem) => void;
+  addSource: (item: CitationItem) => void;
+  editSource: (item: CitationItem) => void;
+  deleteSource: (id: string) => void;
   citationStyle: string;
   setCitationStyle: (s: string) => void;
-  insertBibliography: () => void;
+  insertBibliography: (type?: 'Bibliography' | 'References' | 'Works Cited') => void;
+  updateBibliography: () => void;
   footnotes: FootnoteItem[];
-  insertFootnote: (text: string, isEndnote?: boolean) => void;
+  insertFootnote: (text?: string, isEndnote?: boolean, format?: string) => void;
+  nextFootnote: () => void;
+  previousFootnote: () => void;
+  showNotes: () => void;
+  convertFootnotesEndnotes: () => void;
+  insertTableOfContents: (type?: 'automatic1' | 'automatic2' | 'manual', levels?: number) => void;
+  updateTableOfContents: () => void;
+  markTocEntry: (level: number | null) => void;
   wordCountStats: WordCountStats;
   calculateWordCount: () => void;
   savedStatus: 'Saved' | 'Unsaved' | 'Autosaving...';
@@ -217,8 +228,6 @@ interface DocumentContextType {
   insertEquation: (formula: string) => void;
   insertPageBreak: () => void;
   insertBlankPage: () => void;
-  insertTableOfContents: () => void;
-  updateTableOfContents: () => void;
   // Header / Footer options
   differentFirstPage: boolean;
   setDifferentFirstPage: (val: boolean) => void;
@@ -389,7 +398,40 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [autoGrammarCheck, setAutoGrammarCheck] = useState(true);
 
   // References
-  const [citations, setCitations] = useState<CitationItem[]>([]);
+  const initialDefaultCitations: CitationItem[] = [
+    {
+      id: 'src-1',
+      author: 'Smith, John',
+      title: 'Principles of Modern Document Formatting',
+      year: '2023',
+      sourceType: 'Book',
+      publisher: 'Academic Press',
+      city: 'New York',
+      tag: 'Smi23',
+    },
+    {
+      id: 'src-2',
+      author: 'Johnson, Eleanor & Davis, Robert',
+      title: 'Structured Typography and Print Layouts',
+      year: '2024',
+      sourceType: 'Journal Article',
+      publisher: 'Journal of Computing & Publishing',
+      city: 'Boston',
+      tag: 'Joh24',
+    },
+    {
+      id: 'src-3',
+      author: 'Miller, Clara',
+      title: 'ISO Standards for Electronic Office Applications',
+      year: '2022',
+      sourceType: 'Report',
+      publisher: 'Technical Standards Organization',
+      city: 'Geneva',
+      tag: 'Mil22',
+    },
+  ];
+
+  const [citations, setCitations] = useState<CitationItem[]>(initialDefaultCitations);
   const [citationStyle, setCitationStyle] = useState('APA');
   const [footnotes, setFootnotes] = useState<FootnoteItem[]>([]);
 
@@ -1971,58 +2013,266 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [headerText, footerText, renumberPages, recordSnapshot, calculateWordCount, updateSelectionState]);
 
-  const insertTableOfContents = useCallback(() => {
+  const insertTableOfContents = useCallback((type: 'automatic1' | 'automatic2' | 'manual' = 'automatic1', levels = 3) => {
     if (!editorRef.current) return;
-    const headings = editorRef.current.querySelectorAll('h1, h2, h3');
-    let tocHtml = `<div style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 16px; margin: 16px 0; font-family: Calibri, sans-serif;" contenteditable="false"><div style="font-size: 16pt; font-weight: bold; color: #365f91; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Table of Contents</div>`;
+    const title = type === 'automatic2' ? 'Contents' : 'Table of Contents';
+    
+    // Find headings in document
+    const query = levels === 1 ? 'h1' : levels === 2 ? 'h1, h2' : 'h1, h2, h3';
+    const headings = Array.from(editorRef.current.querySelectorAll(query)).filter(
+      (h) => !h.closest('.word-toc') && !h.closest('.word-bibliography')
+    );
 
-    if (headings.length === 0) {
-      tocHtml += `<div style="font-style: italic; color: #64748b; font-size: 11pt;">No headings found in document. Use Heading 1 or Heading 2 styles to build your Table of Contents.</div>`;
+    let tocHtml = `
+      <div class="word-toc" style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 18px 22px; margin: 18px 0; font-family: Calibri, sans-serif; border-radius: 2px;" contenteditable="false">
+        <div style="font-size: 16pt; font-weight: bold; color: #365f91; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">${title}</div>
+    `;
+
+    if (type === 'manual') {
+      tocHtml += `
+        <div style="font-size: 11pt; padding: 4px 0; display: flex; justify-content: space-between;"><span style="font-weight: bold;">Type Chapter Title (level 1)</span><span style="color: #64748b; border-bottom: 1px dotted #94a3b8; flex: 1; margin: 0 8px 4px 8px;"></span><span style="color: #365f91;">1</span></div>
+        <div style="margin-left: 20px; font-size: 11pt; padding: 4px 0; display: flex; justify-content: space-between;"><span>Type Heading 1 (level 2)</span><span style="color: #64748b; border-bottom: 1px dotted #94a3b8; flex: 1; margin: 0 8px 4px 8px;"></span><span style="color: #365f91;">1</span></div>
+        <div style="margin-left: 40px; font-size: 11pt; padding: 4px 0; display: flex; justify-content: space-between;"><span>Type Heading 2 (level 3)</span><span style="color: #64748b; border-bottom: 1px dotted #94a3b8; flex: 1; margin: 0 8px 4px 8px;"></span><span style="color: #365f91;">2</span></div>
+      `;
+    } else if (headings.length === 0) {
+      tocHtml += `<div style="font-style: italic; color: #64748b; font-size: 11pt;">No headings found in document. Use Heading 1, 2, or 3 styles to build your Table of Contents.</div>`;
     } else {
-      headings.forEach((h, idx) => {
-        const text = h.textContent || `Section ${idx + 1}`;
-        const level = h.tagName.toLowerCase();
-        const ind = level === 'h1' ? '0px' : level === 'h2' ? '20px' : '40px';
-        const weight = level === 'h1' ? 'bold' : 'normal';
-        tocHtml += `<div style="margin-left: ${ind}; font-weight: ${weight}; font-size: 11pt; padding: 3px 0; display: flex; justify-content: space-between;"><span>${text}</span><span style="color: #64748b; border-bottom: 1px dotted #94a3b8; flex: 1; margin: 0 8px 4px 8px;"></span><span style="color: #365f91;">${idx + 1}</span></div>`;
+      headings.forEach((h) => {
+        const text = h.textContent?.trim() || 'Untitled Section';
+        const tag = h.tagName.toLowerCase();
+        const ind = tag === 'h1' ? '0px' : tag === 'h2' ? '20px' : '40px';
+        const weight = tag === 'h1' ? 'bold' : 'normal';
+        // Compute real page number!
+        const pageEl = h.closest('.word-page');
+        const pageNum = pageEl?.getAttribute('data-page') || '1';
+
+        tocHtml += `
+          <div style="margin-left: ${ind}; font-weight: ${weight}; font-size: 11pt; padding: 4px 0; display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="color: #1e293b;">${text}</span>
+            <span style="color: #64748b; border-bottom: 1px dotted #94a3b8; flex: 1; margin: 0 8px 4px 8px;"></span>
+            <span style="color: #365f91; font-weight: normal;">${pageNum}</span>
+          </div>
+        `;
       });
     }
+
     tocHtml += `</div><p><br/></p>`;
-    document.execCommand('insertHTML', false, tocHtml);
+
+    // If TOC already exists, update in place
+    const existing = editorRef.current.querySelector('.word-toc');
+    if (existing) {
+      existing.outerHTML = tocHtml;
+    } else {
+      document.execCommand('insertHTML', false, tocHtml);
+    }
     recordSnapshot();
   }, [recordSnapshot]);
 
   const updateTableOfContents = useCallback(() => {
-    insertTableOfContents();
+    insertTableOfContents('automatic1');
   }, [insertTableOfContents]);
 
-  const insertFootnote = useCallback((text: string, isEndnote = false) => {
+  const markTocEntry = useCallback((level: number | null) => {
+    if (level === null) {
+      executeCommand('formatBlock', '<p>');
+    } else if (level === 1) {
+      executeCommand('formatBlock', '<h1>');
+    } else if (level === 2) {
+      executeCommand('formatBlock', '<h2>');
+    } else if (level === 3) {
+      executeCommand('formatBlock', '<h3>');
+    }
+    recordSnapshot();
+  }, [executeCommand, recordSnapshot]);
+
+  const insertFootnote = useCallback((text?: string, isEndnote = false, format?: string) => {
     const num = footnotes.length + 1;
-    const newFn: FootnoteItem = { id: Date.now().toString(), number: num, text, type: isEndnote ? 'endnote' : 'footnote' };
+    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
+    const label = isEndnote ? (romanNumerals[num - 1] || `${num}`) : `${num}`;
+    const promptText = text !== undefined ? text : (window.prompt(isEndnote ? 'Enter Endnote text:' : 'Enter Footnote text:', isEndnote ? 'Endnote text note' : 'Footnote reference note') || '');
+    if (promptText === null) return;
+    const finalNoteText = promptText || (isEndnote ? 'Endnote text note' : 'Footnote reference note');
+
+    const newFn: FootnoteItem = { id: Date.now().toString(), number: num, text: finalNoteText, type: isEndnote ? 'endnote' : 'footnote' };
     setFootnotes((prev) => [...prev, newFn]);
-    document.execCommand('insertHTML', false, `<sup style="color: #2563eb; font-weight: bold; cursor: pointer;" title="${text}">[${num}]</sup>`);
+
+    // Insert inline marker at cursor
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<sup class="word-note-marker" style="color: #2563eb; font-weight: bold; cursor: pointer;" title="${finalNoteText}">[${label}]</sup>&nbsp;`
+    );
+
+    // Place footnote at bottom of current page
+    if (editorRef.current) {
+      if (!isEndnote) {
+        // Find current selection page
+        const sel = window.getSelection();
+        let targetPage: Element | null = null;
+        if (sel && sel.anchorNode) {
+          const el = sel.anchorNode.nodeType === Node.ELEMENT_NODE ? (sel.anchorNode as Element) : sel.anchorNode.parentElement;
+          targetPage = el?.closest('.word-page') || null;
+        }
+        if (!targetPage) {
+          targetPage = editorRef.current.querySelector('.word-page');
+        }
+
+        if (targetPage) {
+          const contentArea = targetPage.querySelector('.word-page-content');
+          if (contentArea) {
+            let fnContainer = contentArea.querySelector('.word-page-footnotes');
+            if (!fnContainer) {
+              fnContainer = document.createElement('div');
+              fnContainer.className = 'word-page-footnotes';
+              fnContainer.setAttribute('contenteditable', 'false');
+              fnContainer.setAttribute(
+                'style',
+                'margin-top: 24px; padding-top: 6px; border-top: 1px solid #94a3b8; font-size: 9pt; color: #334155; font-family: Calibri, sans-serif;'
+              );
+              contentArea.appendChild(fnContainer);
+            }
+            const noteEl = document.createElement('div');
+            noteEl.className = 'word-footnote-entry';
+            noteEl.id = `footnote-${num}`;
+            noteEl.setAttribute('style', 'margin: 2px 0; display: flex; gap: 4px; align-items: baseline;');
+            noteEl.innerHTML = `<sup style="font-weight: bold; color: #2563eb;">${label}</sup> <span>${finalNoteText}</span>`;
+            fnContainer.appendChild(noteEl);
+          }
+        }
+      } else {
+        // Endnote: place in last page under Endnotes section
+        const pages = editorRef.current.querySelectorAll('.word-page');
+        const lastPage = pages[pages.length - 1];
+        if (lastPage) {
+          const contentArea = lastPage.querySelector('.word-page-content');
+          if (contentArea) {
+            let endnotesContainer = contentArea.querySelector('.word-endnotes-container');
+            if (!endnotesContainer) {
+              endnotesContainer = document.createElement('div');
+              endnotesContainer.className = 'word-endnotes-container';
+              endnotesContainer.setAttribute('contenteditable', 'false');
+              endnotesContainer.setAttribute(
+                'style',
+                'margin-top: 32px; padding-top: 10px; border-top: 2px solid #365f91; font-family: Calibri, sans-serif;'
+              );
+              endnotesContainer.innerHTML = `<h3 style="font-size: 11pt; color: #365f91; font-weight: bold; margin-bottom: 6px;">Endnotes</h3>`;
+              contentArea.appendChild(endnotesContainer);
+            }
+            const endnoteEl = document.createElement('div');
+            endnoteEl.className = 'word-endnote-entry';
+            endnoteEl.setAttribute('style', 'margin: 2px 0; display: flex; gap: 4px; align-items: baseline; font-size: 9.5pt; color: #334155;');
+            endnoteEl.innerHTML = `<sup style="font-weight: bold; color: #2563eb;">${label}</sup> <span>${finalNoteText}</span>`;
+            endnotesContainer.appendChild(endnoteEl);
+          }
+        }
+      }
+    }
     recordSnapshot();
   }, [footnotes.length, recordSnapshot]);
 
-  const addCitation = useCallback((item: CitationItem) => {
-    setCitations((prev) => [...prev, item]);
-    document.execCommand('insertHTML', false, `<span style="color: #1e3a8a; font-weight: 500;">(${item.author}, ${item.year})</span>`);
+  const nextFootnote = useCallback(() => {
+    if (!editorRef.current) return;
+    const markers = editorRef.current.querySelectorAll('.word-note-marker');
+    if (markers.length > 0) {
+      markers[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  const previousFootnote = useCallback(() => {
+    if (!editorRef.current) return;
+    const markers = editorRef.current.querySelectorAll('.word-note-marker');
+    if (markers.length > 0) {
+      markers[markers.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  const showNotes = useCallback(() => {
+    if (!editorRef.current) return;
+    const fn = editorRef.current.querySelector('.word-page-footnotes, .word-endnotes-container');
+    if (fn) {
+      fn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  const convertFootnotesEndnotes = useCallback(() => {
+    setFootnotes((prev) =>
+      prev.map((fn) => ({
+        ...fn,
+        type: fn.type === 'footnote' ? 'endnote' : 'footnote',
+      }))
+    );
     recordSnapshot();
   }, [recordSnapshot]);
 
-  const insertBibliography = useCallback(() => {
-    let bibHtml = `<div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #365f91; font-family: Calibri, sans-serif;"><h2 style="font-size: 16pt; color: #365f91; font-weight: bold; margin-bottom: 12px;">Bibliography</h2>`;
+  const addSource = useCallback((item: CitationItem) => {
+    setCitations((prev) => [...prev.filter((c) => c.id !== item.id), item]);
+  }, []);
+
+  const editSource = useCallback((item: CitationItem) => {
+    setCitations((prev) => prev.map((c) => (c.id === item.id ? item : c)));
+  }, []);
+
+  const deleteSource = useCallback((id: string) => {
+    setCitations((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  const addCitation = useCallback((item: CitationItem) => {
+    const authorLast = item.author.split(',')[0].split('&')[0].trim() || 'Author';
+    let citeText = `(${authorLast}, ${item.year})`;
+    if (citationStyle === 'MLA') {
+      citeText = `(${authorLast})`;
+    } else if (citationStyle === 'Chicago') {
+      citeText = `(${authorLast} ${item.year})`;
+    } else if (citationStyle === 'IEEE') {
+      const idx = citations.findIndex((c) => c.id === item.id);
+      citeText = `[${idx >= 0 ? idx + 1 : 1}]`;
+    } else if (citationStyle === 'Harvard') {
+      citeText = `(${authorLast}, ${item.year})`;
+    }
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<span style="color: #1e3a8a; font-weight: 500; cursor: pointer; text-decoration: none;" title="${item.author}: ${item.title} (${item.year})">${citeText}</span>&nbsp;`
+    );
+    recordSnapshot();
+  }, [citationStyle, citations, recordSnapshot]);
+
+  const insertBibliography = useCallback((type: 'Bibliography' | 'References' | 'Works Cited' = 'Bibliography') => {
+    if (!editorRef.current) return;
+    const title = type;
+    let bibHtml = `
+      <div class="word-bibliography" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #365f91; font-family: Calibri, sans-serif;" contenteditable="false">
+        <h2 style="font-size: 16pt; color: #365f91; font-weight: bold; margin-bottom: 12px;">${title}</h2>
+    `;
     if (citations.length === 0) {
       bibHtml += `<p style="font-style: italic; color: #64748b; font-size: 11pt;">There are no sources in the current document.</p>`;
     } else {
-      citations.forEach((c) => {
-        bibHtml += `<p style="margin-bottom: 6px; font-size: 11pt; text-indent: -24px; padding-left: 24px;">${c.author} (${c.year}). <em>${c.title}</em>. ${c.publisher || ''}</p>`;
+      citations.forEach((c, idx) => {
+        let entry = '';
+        if (citationStyle === 'IEEE') {
+          entry = `[${idx + 1}] ${c.author}, <em>${c.title}</em>, ${c.city ? c.city + ': ' : ''}${c.publisher || ''}, ${c.year}.`;
+        } else if (citationStyle === 'MLA') {
+          entry = `${c.author}. <em>${c.title}</em>. ${c.publisher || ''}, ${c.year}.`;
+        } else {
+          entry = `${c.author} (${c.year}). <em>${c.title}</em>. ${c.city ? c.city + ': ' : ''}${c.publisher || ''}.`;
+        }
+        bibHtml += `<p style="margin-bottom: 8px; font-size: 11pt; text-indent: -28px; padding-left: 28px; line-height: 1.25; color: #1e293b;">${entry}</p>`;
       });
     }
     bibHtml += `</div><p><br/></p>`;
-    document.execCommand('insertHTML', false, bibHtml);
+
+    const existing = editorRef.current.querySelector('.word-bibliography');
+    if (existing) {
+      existing.outerHTML = bibHtml;
+    } else {
+      document.execCommand('insertHTML', false, bibHtml);
+    }
     recordSnapshot();
-  }, [citations, recordSnapshot]);
+  }, [citations, citationStyle, recordSnapshot]);
+
+  const updateBibliography = useCallback(() => {
+    insertBibliography('Bibliography');
+  }, [insertBibliography]);
 
   const addComment = useCallback((text: string) => {
     const newComment: DocumentComment = {
@@ -2264,11 +2514,20 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         rejectChange,
         citations,
         addCitation,
+        addSource,
+        editSource,
+        deleteSource,
         citationStyle,
         setCitationStyle,
         insertBibliography,
+        updateBibliography,
         footnotes,
         insertFootnote,
+        nextFootnote,
+        previousFootnote,
+        showNotes,
+        convertFootnotesEndnotes,
+        markTocEntry,
         wordCountStats,
         calculateWordCount,
         savedStatus,

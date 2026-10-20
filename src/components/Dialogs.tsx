@@ -850,3 +850,349 @@ export const WordOptionsDialog: React.FC<{ isOpen: boolean; onClose: () => void 
     </DialogModal>
   );
 };
+
+// 14. Manage Sources Dialog (Word 2010 Style)
+export const ManageSourcesDialog: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const { citations, addSource, editSource, deleteSource, citationStyle, setCitationStyle } = useDocument();
+  const [selectedId, setSelectedId] = useState<string | null>(citations[0]?.id || null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: '',
+    author: '',
+    title: '',
+    year: '',
+    city: '',
+    publisher: '',
+    sourceType: 'Book',
+  });
+
+  const selectedItem = citations.find((c) => c.id === selectedId);
+
+  const startCreate = () => {
+    setEditForm({
+      id: 'src-' + Date.now(),
+      author: '',
+      title: '',
+      year: new Date().getFullYear().toString(),
+      city: '',
+      publisher: '',
+      sourceType: 'Book',
+    });
+    setIsEditing(true);
+  };
+
+  const startEdit = () => {
+    if (!selectedItem) return;
+    setEditForm({
+      id: selectedItem.id,
+      author: selectedItem.author,
+      title: selectedItem.title,
+      year: selectedItem.year,
+      city: selectedItem.city || '',
+      publisher: selectedItem.publisher || '',
+      sourceType: selectedItem.sourceType || 'Book',
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (!editForm.author.trim() || !editForm.title.trim()) {
+      alert('Please provide at least an Author and a Title.');
+      return;
+    }
+    const exists = citations.some((c) => c.id === editForm.id);
+    if (exists) {
+      editSource(editForm);
+    } else {
+      addSource(editForm);
+      setSelectedId(editForm.id);
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <DialogModal title="Source Manager" isOpen={isOpen} onClose={onClose} width="w-[660px]">
+      <div className="text-[11px] space-y-3 font-sans">
+        {isEditing ? (
+          <fieldset className="border border-[#abc1db] p-3 rounded-[2px] bg-[#fbfdff]">
+            <legend className="px-1 font-semibold text-[#1e395b]">Create / Edit Source</legend>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="w-28 font-medium">Type of Source:</span>
+                <select
+                  value={editForm.sourceType}
+                  onChange={(e) => setEditForm({ ...editForm, sourceType: e.target.value })}
+                  className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                >
+                  <option value="Book">Book</option>
+                  <option value="Book Section">Book Section</option>
+                  <option value="Journal Article">Journal Article</option>
+                  <option value="Conference Proceedings">Conference Proceedings</option>
+                  <option value="Report">Report</option>
+                  <option value="Website">Website</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="w-28 font-medium">Author:</span>
+                <input
+                  type="text"
+                  placeholder="Lastname, Firstname"
+                  value={editForm.author}
+                  onChange={(e) => setEditForm({ ...editForm, author: e.target.value })}
+                  className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="w-28 font-medium">Title:</span>
+                <input
+                  type="text"
+                  placeholder="Document or Book Title"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="w-28 font-medium">Year:</span>
+                  <input
+                    type="text"
+                    value={editForm.year}
+                    onChange={(e) => setEditForm({ ...editForm, year: e.target.value })}
+                    className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="w-16 font-medium">City:</span>
+                  <input
+                    type="text"
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="w-28 font-medium">Publisher:</span>
+                <input
+                  type="text"
+                  value={editForm.publisher}
+                  onChange={(e) => setEditForm({ ...editForm, publisher: e.target.value })}
+                  className="flex-1 border border-[#abc1db] px-1.5 py-0.5 bg-white text-[11px]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-[#abc1db]">
+              <button
+                onClick={handleSave}
+                className="px-4 py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px] font-semibold text-[#1e395b]"
+              >
+                OK
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px]"
+              >
+                Cancel
+              </button>
+            </div>
+          </fieldset>
+        ) : (
+          <>
+            <div className="flex justify-between items-center bg-[#f0f4f9] p-2 border border-[#abc1db] rounded-[2px]">
+              <span className="font-semibold text-[#1e395b]">Current Citation Style:</span>
+              <select
+                value={citationStyle}
+                onChange={(e) => setCitationStyle(e.target.value)}
+                className="border border-[#abc1db] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1e395b]"
+              >
+                <option value="APA">APA (Sixth Edition)</option>
+                <option value="MLA">MLA (Seventh Edition)</option>
+                <option value="Chicago">Chicago (Fifteenth Edition)</option>
+                <option value="IEEE">IEEE</option>
+                <option value="Harvard">Harvard - Anglia 2008</option>
+                <option value="Turabian">Turabian (Sixth Edition)</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-9 border border-[#abc1db] bg-white h-[180px] overflow-y-auto">
+                <div className="bg-[#f0f4f9] border-b border-[#abc1db] px-2 py-1 font-semibold text-[#1e395b] grid grid-cols-12 text-[10.5px]">
+                  <span className="col-span-4">Tag / Author</span>
+                  <span className="col-span-6">Title</span>
+                  <span className="col-span-2 text-right">Year</span>
+                </div>
+                {citations.length === 0 ? (
+                  <div className="p-4 text-center text-gray-400 italic">No sources created yet. Click "New..." to add one.</div>
+                ) : (
+                  citations.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelectedId(c.id)}
+                      className={`px-2 py-1 grid grid-cols-12 cursor-pointer border-b border-gray-100 ${
+                        selectedId === c.id ? 'bg-[#3399ff] text-white font-medium' : 'hover:bg-blue-50 text-gray-800'
+                      }`}
+                    >
+                      <span className="col-span-4 truncate">{c.author}</span>
+                      <span className="col-span-6 truncate">{c.title}</span>
+                      <span className="col-span-2 text-right">{c.year}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="col-span-3 flex flex-col gap-1.5 justify-start">
+                <button
+                  onClick={startCreate}
+                  className="w-full py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px] font-medium"
+                >
+                  New...
+                </button>
+                <button
+                  onClick={startEdit}
+                  disabled={!selectedItem}
+                  className={`w-full py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] border border-[#707070] rounded-[2px] font-medium ${
+                    !selectedItem ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#e5effa] hover:to-[#cbe3fb]'
+                  }`}
+                >
+                  Edit...
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedId) deleteSource(selectedId);
+                  }}
+                  disabled={!selectedItem}
+                  className={`w-full py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] border border-[#707070] rounded-[2px] font-medium text-red-600 ${
+                    !selectedItem ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#ffebeb] hover:to-[#ffd6d6]'
+                  }`}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Box */}
+            <fieldset className="border border-[#abc1db] p-2.5 rounded-[2px] bg-[#fbfdff]">
+              <legend className="px-1 text-[10.5px] font-semibold text-[#1e395b]">Source Preview</legend>
+              {selectedItem ? (
+                <div className="text-[11px] text-gray-800">
+                  <div className="font-semibold text-[#1e395b] mb-1">
+                    Citation: <span className="font-mono text-blue-700">({selectedItem.author.split(',')[0].trim()}, {selectedItem.year})</span>
+                  </div>
+                  <div className="text-gray-700">
+                    Bibliography entry: {selectedItem.author} ({selectedItem.year}). <em>{selectedItem.title}</em>. {selectedItem.city ? selectedItem.city + ': ' : ''}{selectedItem.publisher || ''}.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-400 italic">Select a source from the list above to view preview.</div>
+              )}
+            </fieldset>
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={onClose}
+                className="px-5 py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px] font-medium text-[#1e395b]"
+              >
+                Close
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </DialogModal>
+  );
+};
+
+// 15. Footnotes and Endnotes Options Dialog
+export const FootnotesDialog: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const { insertFootnote, convertFootnotesEndnotes } = useDocument();
+  const [noteType, setNoteType] = useState<'footnote' | 'endnote'>('footnote');
+  const [numFormat, setNumFormat] = useState('1, 2, 3...');
+  const [startAt, setStartAt] = useState('1');
+
+  const handleInsert = () => {
+    insertFootnote('New footnote note', noteType === 'endnote');
+    onClose();
+  };
+
+  return (
+    <DialogModal title="Footnote and Endnote" isOpen={isOpen} onClose={onClose} width="w-[450px]">
+      <div className="text-[11px] space-y-3 font-sans">
+        <fieldset className="border border-[#abc1db] p-2.5 rounded-[2px]">
+          <legend className="px-1 font-semibold text-[#1e395b]">Location</legend>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="noteType" checked={noteType === 'footnote'} onChange={() => setNoteType('footnote')} />
+              <span>Footnotes:</span>
+              <span className="text-gray-500 ml-auto">Bottom of page</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="noteType" checked={noteType === 'endnote'} onChange={() => setNoteType('endnote')} />
+              <span>Endnotes:</span>
+              <span className="text-gray-500 ml-auto">End of document</span>
+            </label>
+          </div>
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <button
+              onClick={() => {
+                convertFootnotesEndnotes();
+                alert('Converted all notes between Footnotes and Endnotes.');
+              }}
+              className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-400 rounded text-[10px]"
+            >
+              Convert Notes...
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset className="border border-[#abc1db] p-2.5 rounded-[2px]">
+          <legend className="px-1 font-semibold text-[#1e395b]">Format</legend>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span>Number format:</span>
+              <select
+                value={numFormat}
+                onChange={(e) => setNumFormat(e.target.value)}
+                className="w-36 border border-[#abc1db] bg-white px-1 py-0.5 text-[11px]"
+              >
+                <option value="1, 2, 3...">1, 2, 3, ...</option>
+                <option value="a, b, c...">a, b, c, ...</option>
+                <option value="i, ii, iii...">i, ii, iii, ...</option>
+                <option value="A, B, C...">A, B, C, ...</option>
+                <option value="*, †, ‡...">*, †, ‡, ...</option>
+              </select>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Start at:</span>
+              <input
+                type="number"
+                value={startAt}
+                onChange={(e) => setStartAt(e.target.value)}
+                className="w-16 border border-[#abc1db] bg-white px-1 py-0.5 text-[11px] text-center"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Numbering:</span>
+              <span className="text-gray-600 font-medium">Continuous</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            onClick={handleInsert}
+            className="px-4 py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px] font-semibold text-[#1e395b]"
+          >
+            Insert
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-1 bg-gradient-to-b from-[#f2f4f7] to-[#d8dde3] hover:from-[#e5effa] hover:to-[#cbe3fb] border border-[#707070] rounded-[2px]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </DialogModal>
+  );
+};

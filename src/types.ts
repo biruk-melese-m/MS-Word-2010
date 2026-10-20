@@ -70,6 +70,9 @@ export interface CitationItem {
   year: string;
   sourceType: string;
   publisher?: string;
+  city?: string;
+  url?: string;
+  tag?: string;
 }
 
 export interface FootnoteItem {

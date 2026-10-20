@@ -24,6 +24,8 @@ import {
   SpellingDialog,
   ZoomDialog,
   WordOptionsDialog,
+  ManageSourcesDialog,
+  FootnotesDialog,
 } from './components/Dialogs';
 import { RibbonTabType, DocumentViewMode } from './types';
 import { DocumentProvider } from './context/DocumentContext';
@@ -201,6 +203,16 @@ function WordApp() {
 
       <WordOptionsDialog
         isOpen={activeDialog === 'options'}
+        onClose={handleCloseDialog}
+      />
+
+      <ManageSourcesDialog
+        isOpen={activeDialog === 'manageSources'}
+        onClose={handleCloseDialog}
+      />
+
+      <FootnotesDialog
+        isOpen={activeDialog === 'footnotes'}
         onClose={handleCloseDialog}
       />
     </div>

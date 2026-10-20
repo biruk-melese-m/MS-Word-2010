@@ -910,11 +910,14 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
     deleteTable,
     mergeTableCells,
     splitTableCells,
+    selectTable,
     distributeTable,
     autoFitTable,
     setTableCellAlignment,
+    setTableCellMargins,
     setTableBorders,
     setTableShading,
+    repeatHeaderRow,
     sortTable,
     convertTextToTable,
     convertTableToText,
@@ -922,7 +925,9 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
     formatSelectedImage,
     insertShape,
     formatSelectedShape,
+    arrangeObject,
     insertHyperlink,
+    removeHyperlink,
     insertBookmark,
     goToBookmark,
     insertCrossReference,
@@ -941,20 +946,21 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
     insertDateTime,
     insertTableOfContents,
     updateTableOfContents,
+    markTocEntry,
     insertFootnote,
+    nextFootnote,
+    previousFootnote,
+    showNotes,
+    convertFootnotesEndnotes,
+    citations,
     addCitation,
+    addSource,
+    editSource,
+    deleteSource,
     citationStyle,
+    setCitationStyle,
     insertBibliography,
-    comments,
-    addComment,
-    deleteComment,
-    activeCommentId,
-    navigateToComment,
-    trackChanges,
-    setTrackChanges,
-    trackedChanges,
-    acceptChange,
-    rejectChange,
+    updateBibliography,
   } = useDocument();
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -968,6 +974,11 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [pageNumberMenuOpen, setPageNumberMenuOpen] = useState(false);
   const [tocMenuOpen, setTocMenuOpen] = useState(false);
+  const [addTextMenuOpen, setAddTextMenuOpen] = useState(false);
+  const [footnoteNavOpen, setFootnoteNavOpen] = useState(false);
+  const [citationMenuOpen, setCitationMenuOpen] = useState(false);
+  const [bibMenuOpen, setBibMenuOpen] = useState(false);
+  const [styleMenuOpen, setStyleMenuOpen] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -1065,8 +1076,13 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
           {tableToolsOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setTableToolsOpen(false)} />
-              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] p-2 z-50 text-[11px] w-[260px] max-h-[360px] overflow-y-auto">
-                <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Rows & Columns</div>
+              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] p-2 z-50 text-[11px] w-[280px] max-h-[380px] overflow-y-auto">
+                <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Select & Rows/Columns</div>
+                <div className="grid grid-cols-3 gap-1 mb-2">
+                  <button onClick={() => selectTable('row')} className="px-1.5 py-1 text-center bg-gray-50 hover:bg-blue-100 rounded text-[10px]">Select Row</button>
+                  <button onClick={() => selectTable('column')} className="px-1.5 py-1 text-center bg-gray-50 hover:bg-blue-100 rounded text-[10px]">Select Col</button>
+                  <button onClick={() => selectTable('table')} className="px-1.5 py-1 text-center bg-gray-50 hover:bg-blue-100 rounded text-[10px] font-semibold">Select Table</button>
+                </div>
                 <div className="grid grid-cols-2 gap-1 mb-2">
                   <button onClick={() => insertTableRow(true)} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Insert Above</button>
                   <button onClick={() => insertTableRow(false)} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Insert Below</button>
@@ -1076,7 +1092,7 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
                   <button onClick={deleteTableColumn} className="px-2 py-1 text-left bg-red-50 text-red-700 hover:bg-red-100 rounded">Delete Column</button>
                   <button onClick={deleteTable} className="px-2 py-1 text-left col-span-2 bg-red-100 text-red-800 hover:bg-red-200 rounded font-semibold">Delete Table</button>
                 </div>
-                <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Merge & Cell Layout</div>
+                <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Merge, AutoFit & Sizing</div>
                 <div className="grid grid-cols-2 gap-1 mb-2">
                   <button onClick={mergeTableCells} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Merge Cells</button>
                   <button onClick={splitTableCells} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Split Cells</button>
@@ -1084,6 +1100,13 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
                   <button onClick={() => distributeTable('columns')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Distribute Columns</button>
                   <button onClick={() => autoFitTable('contents')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">AutoFit Contents</button>
                   <button onClick={() => autoFitTable('window')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">AutoFit Window</button>
+                  <button onClick={repeatHeaderRow} className="px-2 py-1 text-left col-span-2 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded">Repeat Header Row</button>
+                </div>
+                <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Cell Margins</div>
+                <div className="flex gap-1 mb-2">
+                  <button onClick={() => setTableCellMargins(4)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Tight (4px)</button>
+                  <button onClick={() => setTableCellMargins(8)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Normal (8px)</button>
+                  <button onClick={() => setTableCellMargins(14)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Wide (14px)</button>
                 </div>
                 <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Cell Alignment (9 directions)</div>
                 <div className="grid grid-cols-3 gap-1 mb-2 text-center">
@@ -1098,12 +1121,15 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
                   <button onClick={() => setTableCellAlignment('bottom-right')} className="p-1 bg-gray-100 hover:bg-blue-200 text-[10px]">↘ Bot R</button>
                 </div>
                 <div className="font-semibold text-gray-600 mb-1 border-b pb-1 text-[10px]">Borders & Shading</div>
-                <div className="flex gap-1 mb-1">
-                  <button onClick={() => setTableBorders('all')} className="flex-1 py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">All Borders</button>
-                  <button onClick={() => setTableBorders('outside')} className="flex-1 py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">Outside</button>
-                  <button onClick={() => setTableBorders('none')} className="flex-1 py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">No Border</button>
+                <div className="grid grid-cols-3 gap-1 mb-1">
+                  <button onClick={() => setTableBorders('all')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">All Borders</button>
+                  <button onClick={() => setTableBorders('outside')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">Outside</button>
+                  <button onClick={() => setTableBorders('none')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">No Border</button>
+                  <button onClick={() => setTableBorders('top')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">Top</button>
+                  <button onClick={() => setTableBorders('bottom')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">Bottom</button>
+                  <button onClick={() => setTableBorders('inside')} className="py-1 bg-gray-100 hover:bg-blue-200 text-[10px]">Inside</button>
                 </div>
-                <div className="flex gap-1 mb-1">
+                <div className="flex gap-1 mb-2">
                   <button onClick={() => setTableShading('#fff2cc')} className="w-6 h-5 bg-[#fff2cc] border" title="Yellow" />
                   <button onClick={() => setTableShading('#d9ead3')} className="w-6 h-5 bg-[#d9ead3] border" title="Green" />
                   <button onClick={() => setTableShading('#c9daf8')} className="w-6 h-5 bg-[#c9daf8] border" title="Blue" />
@@ -1111,7 +1137,10 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
                   <button onClick={() => setTableShading('#efefef')} className="w-6 h-5 bg-[#efefef] border" title="Gray" />
                   <button onClick={() => setTableShading('transparent')} className="flex-1 py-0.5 bg-gray-100 text-[10px]">Clear</button>
                 </div>
-                <button onClick={() => sortTable(true)} className="w-full py-1 bg-gray-100 hover:bg-blue-100 text-[10px] font-semibold rounded mt-1">Sort Table A-Z</button>
+                <div className="flex gap-1">
+                  <button onClick={() => sortTable(true)} className="flex-1 py-1 bg-gray-100 hover:bg-blue-100 text-[10px] font-semibold rounded">Sort A-Z</button>
+                  <button onClick={() => sortTable(false)} className="flex-1 py-1 bg-gray-100 hover:bg-blue-100 text-[10px] font-semibold rounded">Sort Z-A</button>
+                </div>
               </div>
             </>
           )}
@@ -1137,23 +1166,69 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
           {pictureMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setPictureMenuOpen(false)} />
-              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] p-2 z-50 text-[11px] w-[200px]">
+              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] p-2 z-50 text-[11px] w-[240px] max-h-[380px] overflow-y-auto">
                 <div
                   onClick={() => { fileInputRef.current?.click(); setPictureMenuOpen(false); }}
-                  className="px-2 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold rounded flex items-center gap-2"
+                  className="px-2 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold rounded flex items-center gap-2 mb-1"
                 >
                   <span>📁</span> Insert Picture from File...
                 </div>
                 <div className="border-t my-1" />
-                <div className="text-[10px] text-gray-500 font-semibold mb-1">Picture Formatting</div>
-                <div onClick={() => formatSelectedImage('rotate')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Rotate 90°</div>
-                <div onClick={() => formatSelectedImage('flipH')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Flip Horizontal</div>
-                <div onClick={() => formatSelectedImage('flipV')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Flip Vertical</div>
-                <div onClick={() => formatSelectedImage('wrap', 'square')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Text Wrap: Square</div>
-                <div onClick={() => formatSelectedImage('wrap', 'top-bottom')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Text Wrap: Top & Bottom</div>
-                <div onClick={() => formatSelectedImage('border', '3px solid #365f91')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Picture Border (Blue)</div>
-                <div onClick={() => formatSelectedImage('resize', '50%')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer">Resize 50%</div>
-                <div onClick={() => formatSelectedImage('reset')} className="px-2 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer text-gray-700 font-semibold border-t mt-1">Reset Picture</div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Size & Crop</div>
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('crop')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Toggle Crop</button>
+                  <button onClick={() => formatSelectedImage('resize', '50%')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Resize 50%</button>
+                  <button onClick={() => formatSelectedImage('resize', '75%')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Resize 75%</button>
+                  <button onClick={() => formatSelectedImage('resize', '100%')} className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded">Resize 100%</button>
+                </div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Rotate & Flip</div>
+                <div className="grid grid-cols-3 gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('rotate')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Rotate 90°</button>
+                  <button onClick={() => formatSelectedImage('flipH')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Flip Horiz</button>
+                  <button onClick={() => formatSelectedImage('flipV')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Flip Vert</button>
+                </div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Text Wrapping & Position</div>
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('wrap', 'square')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">Square Wrap</button>
+                  <button onClick={() => formatSelectedImage('wrap', 'top-bottom')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">Top & Bottom</button>
+                  <button onClick={() => formatSelectedImage('wrap', 'behind')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">Behind Text</button>
+                  <button onClick={() => formatSelectedImage('wrap', 'infront')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">In Front</button>
+                </div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Layer & Arrange</div>
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('layer', 'front')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">Bring to Front</button>
+                  <button onClick={() => formatSelectedImage('layer', 'back')} className="px-1.5 py-1 text-left bg-gray-50 hover:bg-blue-100 text-[10px]">Send to Back</button>
+                </div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Picture Effects & Border</div>
+                <div className="grid grid-cols-3 gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('effect', 'shadow')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Shadow</button>
+                  <button onClick={() => formatSelectedImage('effect', 'grayscale')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Grayscale</button>
+                  <button onClick={() => formatSelectedImage('effect', 'sepia')} className="py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">Sepia</button>
+                  <button onClick={() => formatSelectedImage('border', '2px solid #365f91')} className="py-1 bg-blue-50 text-blue-800 text-[10px]">Blue Border</button>
+                  <button onClick={() => formatSelectedImage('border', '2px solid #111827')} className="py-1 bg-gray-100 text-gray-800 text-[10px]">Dark Border</button>
+                  <button onClick={() => formatSelectedImage('border', 'none')} className="py-1 bg-gray-50 text-[10px]">No Border</button>
+                </div>
+                <div className="text-[10px] text-gray-500 font-semibold mb-1">Transparency</div>
+                <div className="flex gap-1 mb-2">
+                  <button onClick={() => formatSelectedImage('opacity', 1.0)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">100%</button>
+                  <button onClick={() => formatSelectedImage('opacity', 0.75)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">75%</button>
+                  <button onClick={() => formatSelectedImage('opacity', 0.5)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">50%</button>
+                  <button onClick={() => formatSelectedImage('opacity', 0.25)} className="flex-1 py-1 bg-gray-50 hover:bg-blue-100 text-[10px]">25%</button>
+                </div>
+                <div className="border-t pt-1 flex flex-col gap-1">
+                  <button
+                    onClick={() => {
+                      const alt = window.prompt('Enter Alternative Text (Alt Text):');
+                      if (alt !== null) formatSelectedImage('alt', alt);
+                    }}
+                    className="px-2 py-1 text-left bg-gray-50 hover:bg-blue-100 rounded text-[10px]"
+                  >
+                    Set Alternative Text...
+                  </button>
+                  <button onClick={() => formatSelectedImage('reset')} className="px-2 py-1 text-left bg-red-50 text-red-700 hover:bg-red-100 rounded text-[10px] font-semibold">
+                    Reset Picture
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -1207,15 +1282,36 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
       {/* 4. Links Group */}
       <RibbonGroup title="Links">
         <div className="flex flex-col justify-center gap-1 h-[68px]">
-          <RibbonSmallButton icon={<HyperlinkIcon size={14} />} label="Hyperlink" onClick={() => onOpenDialog('hyperlink')} />
-          <RibbonSmallButton
-            icon={<span className="text-[10px] text-blue-600 font-bold">★</span>}
-            label="Bookmark"
-            onClick={() => {
-              const name = window.prompt('Enter Bookmark name:');
-              if (name) insertBookmark(name);
-            }}
-          />
+          <div className="flex items-center gap-1">
+            <RibbonSmallButton icon={<HyperlinkIcon size={14} />} label="Hyperlink" onClick={() => onOpenDialog('hyperlink')} />
+            <button
+              onClick={removeHyperlink}
+              title="Remove Hyperlink"
+              className="text-[10px] text-red-600 px-1 py-0.5 hover:bg-red-50 rounded"
+            >
+              Unlink
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <RibbonSmallButton
+              icon={<span className="text-[10px] text-blue-600 font-bold">★</span>}
+              label="Bookmark"
+              onClick={() => {
+                const name = window.prompt('Enter Bookmark name:');
+                if (name) insertBookmark(name);
+              }}
+            />
+            <button
+              onClick={() => {
+                const name = window.prompt('Go to Bookmark name:');
+                if (name) goToBookmark(name);
+              }}
+              title="Go to Bookmark"
+              className="text-[10px] text-blue-600 px-1 py-0.5 hover:bg-blue-50 rounded"
+            >
+              Go to
+            </button>
+          </div>
           <RibbonSmallButton
             icon={<span className="text-[10px] text-gray-700">☍</span>}
             label="Cross-reference"
@@ -1350,7 +1446,8 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
       </RibbonGroup>
 
       {/* 8. Document References (MOVED FROM REFERENCES TAB) */}
-      <RibbonGroup title="References">
+      <RibbonGroup title="References" hasDialogLauncher onDialogLaunch={() => onOpenDialog('footnotes')}>
+        {/* Table of Contents */}
         <div className="relative">
           <RibbonLargeButton
             icon={<TableOfContentsIcon size={28} />}
@@ -1361,16 +1458,34 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
           {tocMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setTocMenuOpen(false)} />
-              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[200px]">
+              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[220px]">
+                <div className="px-3 py-1 text-gray-500 font-semibold bg-gray-50 border-b text-[10px]">
+                  Built-In Tables of Contents
+                </div>
                 <div
-                  onClick={() => { insertTableOfContents(); setTocMenuOpen(false); }}
-                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold"
+                  onClick={() => { insertTableOfContents('automatic1'); setTocMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col"
                 >
-                  Automatic Table 1
+                  <span>Automatic Table 1</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Table of Contents, Headings 1-3</span>
+                </div>
+                <div
+                  onClick={() => { insertTableOfContents('automatic2'); setTocMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col border-t border-gray-100"
+                >
+                  <span>Automatic Table 2</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Contents, Headings 1-3</span>
+                </div>
+                <div
+                  onClick={() => { insertTableOfContents('manual'); setTocMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col border-t border-gray-100"
+                >
+                  <span>Manual Table</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Sample editable TOC template</span>
                 </div>
                 <div
                   onClick={() => { updateTableOfContents(); setTocMenuOpen(false); }}
-                  className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2 border-t"
+                  className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-2 border-t mt-1 font-medium"
                 >
                   <span>↻</span> Update Table of Contents
                 </div>
@@ -1379,102 +1494,228 @@ export const InsertTab: React.FC<TabProps> = ({ onOpenDialog }) => {
           )}
         </div>
 
+        {/* Add Text & Update Table */}
         <div className="flex flex-col justify-center gap-1 h-[68px]">
+          <div className="relative">
+            <RibbonSmallButton
+              icon={<span className="text-[11px] font-bold text-blue-700">T+</span>}
+              label="Add Text"
+              hasDropdown
+              onClick={() => setAddTextMenuOpen(!addTextMenuOpen)}
+            />
+            {addTextMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setAddTextMenuOpen(false)} />
+                <div className="absolute top-[22px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[190px]">
+                  <div
+                    onClick={() => { markTocEntry(null); setAddTextMenuOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer"
+                  >
+                    Do Not Show in TOC
+                  </div>
+                  <div
+                    onClick={() => { markTocEntry(1); setAddTextMenuOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold"
+                  >
+                    Level 1 (Heading 1)
+                  </div>
+                  <div
+                    onClick={() => { markTocEntry(2); setAddTextMenuOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer font-semibold"
+                  >
+                    Level 2 (Heading 2)
+                  </div>
+                  <div
+                    onClick={() => { markTocEntry(3); setAddTextMenuOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer"
+                  >
+                    Level 3 (Heading 3)
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <RibbonSmallButton
-            icon={<FootnoteIcon size={14} />}
-            label="Insert Footnote"
-            onClick={() => {
-              const text = window.prompt('Enter footnote text:', 'Footnote reference note');
-              if (text) insertFootnote(text);
-            }}
-          />
-          <RibbonSmallButton
-            icon={<span className="text-[10px] font-bold text-gray-700">ABi</span>}
-            label="Insert Endnote"
-            onClick={() => {
-              const text = window.prompt('Enter endnote text:', 'Endnote reference note');
-              if (text) insertFootnote(text, true);
-            }}
-          />
-          <RibbonSmallButton
-            icon={<span className="text-[10px]">📖</span>}
-            label="Insert Citation"
-            onClick={() => addCitation({ id: Date.now().toString(), author: 'Smith, J.', title: 'Research Review', year: '2025', sourceType: 'Book' })}
+            icon={<span className="text-[10px] text-green-700 font-bold">↻</span>}
+            label="Update Table"
+            onClick={updateTableOfContents}
           />
         </div>
 
-        <div className="flex flex-col justify-center gap-1.5 h-[68px] ml-1">
+        {/* Footnotes & Endnotes */}
+        <div className="h-[68px] w-[1px] bg-[#cad8e7] mx-1 self-center" />
+        <RibbonLargeButton
+          icon={<FootnoteIcon size={28} />}
+          label={'Insert\nFootnote'}
+          onClick={() => insertFootnote()}
+        />
+        <RibbonLargeButton
+          icon={<span className="text-[20px] font-serif font-bold text-gray-800">ABⅰ</span>}
+          label={'Insert\nEndnote'}
+          onClick={() => insertFootnote(undefined, true)}
+        />
+        <div className="flex flex-col justify-center gap-1 h-[68px]">
+          <div className="relative">
+            <RibbonSmallButton
+              icon={<span className="text-[10px] font-bold text-gray-700">→¹</span>}
+              label="Next Footnote"
+              hasDropdown
+              onClick={() => setFootnoteNavOpen(!footnoteNavOpen)}
+            />
+            {footnoteNavOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setFootnoteNavOpen(false)} />
+                <div className="absolute top-[22px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[160px]">
+                  <div
+                    onClick={() => { nextFootnote(); setFootnoteNavOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer"
+                  >
+                    Next Footnote
+                  </div>
+                  <div
+                    onClick={() => { previousFootnote(); setFootnoteNavOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer"
+                  >
+                    Previous Footnote
+                  </div>
+                  <div
+                    onClick={() => { onOpenDialog('footnotes'); setFootnoteNavOpen(false); }}
+                    className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer border-t"
+                  >
+                    Footnote Options...
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <RibbonSmallButton
-            icon={<span className="text-[11px]">📑</span>}
-            label="Bibliography"
-            hasDropdown
-            onClick={insertBibliography}
+            icon={<span className="text-[10px]">👁</span>}
+            label="Show Notes"
+            onClick={showNotes}
           />
-          <div className="text-[9px] text-gray-500 font-sans">
-            Style: <span className="font-bold text-[#1e395b]">{citationStyle}</span>
+        </div>
+
+        {/* Citations & Bibliography */}
+        <div className="h-[68px] w-[1px] bg-[#cad8e7] mx-1 self-center" />
+        <div className="relative">
+          <RibbonLargeButton
+            icon={<span className="text-[24px]">📖</span>}
+            label={'Insert\nCitation'}
+            hasDropdown
+            onClick={() => setCitationMenuOpen(!citationMenuOpen)}
+          />
+          {citationMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setCitationMenuOpen(false)} />
+              <div className="absolute top-[72px] left-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[230px]">
+                <div className="px-3 py-1 text-gray-500 font-semibold bg-gray-50 border-b text-[10px]">
+                  Insert Citation
+                </div>
+                {citations.length === 0 ? (
+                  <div className="px-3 py-1.5 text-gray-400 italic">No sources added yet</div>
+                ) : (
+                  citations.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => { addCitation(c); setCitationMenuOpen(false); }}
+                      className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer flex flex-col border-b border-gray-50"
+                    >
+                      <span className="font-semibold">{c.author} ({c.year})</span>
+                      <span className="text-[9.5px] text-gray-500 hover:text-white truncate">{c.title}</span>
+                    </div>
+                  ))
+                )}
+                <div
+                  onClick={() => { onOpenDialog('manageSources'); setCitationMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer flex items-center gap-1.5 border-t text-[#1e395b] font-medium"
+                >
+                  <span>+</span> Add New Source...
+                </div>
+                <div
+                  onClick={() => {
+                    const author = window.prompt('Enter placeholder tag:', 'Placeholder1');
+                    if (author) addCitation({ id: 'src-' + Date.now(), author, title: 'Placeholder', year: new Date().getFullYear().toString(), sourceType: 'Book' });
+                    setCitationMenuOpen(false);
+                  }}
+                  className="px-3 py-1 hover:bg-[#3399ff] hover:text-white cursor-pointer text-gray-600"
+                >
+                  Add New Placeholder...
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-col justify-center gap-1 h-[68px]">
+          <RibbonSmallButton
+            icon={<span className="text-[10px]">📋</span>}
+            label="Manage Sources"
+            onClick={() => onOpenDialog('manageSources')}
+          />
+          {/* Style Selector */}
+          <div className="flex items-center gap-1 text-[10px] text-gray-700 bg-white/70 px-1.5 py-0.5 border border-[#abc1db] rounded-[2px]">
+            <span className="font-medium text-[#41556e]">Style:</span>
+            <select
+              value={citationStyle}
+              onChange={(e) => setCitationStyle(e.target.value)}
+              className="bg-transparent text-[10px] font-bold text-[#1e395b] cursor-pointer outline-none"
+            >
+              <option value="APA">APA</option>
+              <option value="MLA">MLA</option>
+              <option value="Chicago">Chicago</option>
+              <option value="IEEE">IEEE</option>
+              <option value="Harvard">Harvard</option>
+              <option value="Turabian">Turabian</option>
+            </select>
           </div>
         </div>
-      </RibbonGroup>
 
-      {/* 9. Comments Group (MOVED FROM REVIEW TAB) */}
-      <RibbonGroup title="Comments">
-        <RibbonLargeButton
-          icon={<span className="text-[24px]">💬</span>}
-          label={'New\nComment'}
-          onClick={() => {
-            const text = window.prompt('Enter comment:', 'Comment on selected text.');
-            if (text) addComment(text);
-          }}
-        />
-        <div className="flex flex-col justify-center gap-1 h-[68px]">
-          <RibbonSmallButton icon={<span className="text-[10px]">←</span>} label="Previous" onClick={() => navigateToComment('prev')} />
-          <RibbonSmallButton icon={<span className="text-[10px]">→</span>} label="Next" onClick={() => navigateToComment('next')} />
-          <RibbonSmallButton
-            icon={<span className="text-[10px] text-red-500">✕</span>}
-            label="Delete"
-            onClick={() => {
-              if (activeCommentId) deleteComment(activeCommentId);
-              else if (comments.length > 0) deleteComment(comments[0].id);
-            }}
+        {/* Bibliography */}
+        <div className="relative">
+          <RibbonLargeButton
+            icon={<span className="text-[24px]">📑</span>}
+            label={'Bibliography'}
+            hasDropdown
+            onClick={() => setBibMenuOpen(!bibMenuOpen)}
           />
+          {bibMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setBibMenuOpen(false)} />
+              <div className="absolute top-[72px] right-0 bg-white border border-[#abc1db] shadow-xl rounded-[2px] py-1 z-50 text-[11px] w-[210px]">
+                <div className="px-3 py-1 text-gray-500 font-semibold bg-gray-50 border-b text-[10px]">
+                  Built-In Bibliography
+                </div>
+                <div
+                  onClick={() => { insertBibliography('Bibliography'); setBibMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col"
+                >
+                  <span>Bibliography</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Insert bibliography from sources</span>
+                </div>
+                <div
+                  onClick={() => { insertBibliography('References'); setBibMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col border-t border-gray-100"
+                >
+                  <span>References</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Insert references list</span>
+                </div>
+                <div
+                  onClick={() => { insertBibliography('Works Cited'); setBibMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer font-bold flex flex-col border-t border-gray-100"
+                >
+                  <span>Works Cited</span>
+                  <span className="text-[9.5px] font-normal text-gray-500 hover:text-white">Insert works cited list</span>
+                </div>
+                <div
+                  onClick={() => { updateBibliography(); setBibMenuOpen(false); }}
+                  className="px-3 py-1.5 hover:bg-[#3399ff] hover:text-white cursor-pointer border-t text-blue-700 font-medium"
+                >
+                  ↻ Update Citations and Bibliography
+                </div>
+              </div>
+            </>
+          )}
         </div>
-      </RibbonGroup>
-
-      {/* 10. Tracking & Proofing Group (MOVED FROM REVIEW TAB) */}
-      <RibbonGroup title="Tracking & Proofing">
-        <RibbonLargeButton
-          icon={<TrackChangesIcon size={28} />}
-          label={'Track\nChanges'}
-          hasDropdown
-          active={trackChanges}
-          onClick={() => setTrackChanges(!trackChanges)}
-        />
-        <div className="flex flex-col justify-center gap-1 h-[68px]">
-          <RibbonSmallButton
-            icon={<span className="text-[10px] text-green-600 font-bold">✓</span>}
-            label="Accept Change"
-            onClick={() => {
-              if (trackedChanges.length > 0) acceptChange(trackedChanges[0].id);
-            }}
-          />
-          <RibbonSmallButton
-            icon={<span className="text-[10px] text-red-600 font-bold">✗</span>}
-            label="Reject Change"
-            onClick={() => {
-              if (trackedChanges.length > 0) rejectChange(trackedChanges[0].id);
-            }}
-          />
-          <RibbonSmallButton
-            icon={<span className="text-[10px] font-bold text-gray-700">123</span>}
-            label="Word Count"
-            onClick={() => onOpenDialog('wordCount')}
-          />
-        </div>
-        <RibbonLargeButton
-          icon={<SpellingGrammarIcon size={28} />}
-          label={'Spelling &\nGrammar'}
-          onClick={() => onOpenDialog('spelling')}
-        />
       </RibbonGroup>
     </div>
   );
